@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const client = axios.create({ baseURL: 'https://rekesznyilvantarto.runasp.net/api' })
+const base = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const baseURL = `${base.replace(/\/$/, '')}/api`
+const client = axios.create({ baseURL })
 
 client.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
@@ -13,9 +15,11 @@ client.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('email')
       localStorage.removeItem('felhasznalonev')
       localStorage.removeItem('role')
-      if (location.pathname !== '/login') location.href = '/login'
+      localStorage.removeItem('userId')
+      if (!['/login', '/register', '/verify-email'].includes(location.pathname)) location.href = '/login'
     }
     return Promise.reject(err)
   }
