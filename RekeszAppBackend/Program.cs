@@ -11,6 +11,8 @@ using RekeszAppBackend.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -34,14 +36,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     });
 builder.Services.AddAuthorization();
 
+var allowedOrigins = configuration.GetSection("Cors:Origins").Get<string[]>()
+    ?? new[] { "http://localhost:5173", "http://127.0.0.1:5173" };
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
-    policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "https://rekesznyilvantarto.tryasp.net")
-        .AllowAnyHeader().AllowAnyMethod()));
+    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "RekeszApp API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ZoldPiac API", Version = "v2" });
     var jwtScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -64,16 +67,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await DbInitializer.InitializeAsync(db);
-        app.Logger.LogInformation("✅ Adatbázis inicializálás sikeres (migráció + seed).");
+        app.Logger.LogInformation("Adatbázis inicializálás sikeres (migráció).");
     }
     catch (Exception ex)
     {
-        // Szándékosan NEM dobjuk tovább: ha induláskor (pl. "elalvó" megosztott
-        // MySQL-szolgáltatás miatt) nem sikerül a kapcsolódás/migráció, az alkalmazás
-        // akkor is elinduljon - a következő tényleges kérés (pl. bejelentkezés) a
-        // normál EF kapcsolatkezelésen (és annak retry-logikáján) keresztül úgyis
-        // újra megpróbálja majd a kapcsolódást.
-        app.Logger.LogCritical(ex, "❌ Adatbázis inicializálás sikertelen induláskor - az app enélkül indul tovább.");
+        app.Logger.LogCritical(ex, "Adatbázis inicializálás sikertelen induláskor - az app enélkül indul tovább.");
     }
 }
 
@@ -85,13 +83,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors("Frontend");
-app.UseStaticFiles(); // wwwroot (css, index.html stb. ha lenne)
+app.UseStaticFiles();
+
 var uploadsDir = UploadsPaths.Resolve(app.Environment, configuration);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsDir),
     RequestPath = "/uploads"
 });
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
