@@ -35,9 +35,9 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder b)
     {
         b.Entity<User>().HasIndex(x => x.Email).IsUnique();
+        b.Entity<Partner>().HasIndex(x => new { x.UserId, x.Nev }).IsUnique();
         b.Entity<Zoldseg>().HasIndex(x => new { x.UserId, x.Nev }).IsUnique();
         b.Entity<RekeszTipus>().HasIndex(x => new { x.UserId, x.Nev }).IsUnique();
-        b.Entity<Partner>().HasIndex(x => new { x.UserId, x.Nev }).IsUnique();
 
         b.Entity<Zoldseg>()
             .HasOne(x => x.AlapertelmezettRekeszTipus).WithMany().HasForeignKey(x => x.AlapertelmezettRekeszTipusId)
@@ -103,9 +103,17 @@ public class AppDbContext : DbContext
         foreach (var entry in ChangeTracker.Entries<IFelhasznaloTulajdona>())
         {
             if (entry.State == EntityState.Added)
+            {
                 entry.Entity.UserId = userId.Value;
-            else if (entry.State == EntityState.Modified)
-                entry.Property(nameof(IFelhasznaloTulajdona.UserId)).IsModified = false;
+            }
+            else if (entry.State is EntityState.Modified or EntityState.Deleted)
+            {
+                if (entry.Entity.UserId != userId.Value)
+                    throw new UnauthorizedAccessException("A rekord nem tartozik a bejelentkezett felhasználóhoz.");
+
+                if (entry.State == EntityState.Modified)
+                    entry.Property(nameof(IFelhasznaloTulajdona.UserId)).IsModified = false;
+            }
         }
     }
 }
