@@ -3,6 +3,8 @@ import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import VerifyEmailView from '../views/VerifyEmailView.vue'
+import AszfView from '../views/AszfView.vue'
+import AdatvedelemView from '../views/AdatvedelemView.vue'
 import FelvasarlasView from '../views/FelvasarlasView.vue'
 import EladasView from '../views/EladasView.vue'
 import EgyenlegView from '../views/EgyenlegView.vue'
@@ -13,6 +15,8 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
     { path: '/register', name: 'register', component: RegisterView, meta: { public: true } },
     { path: '/verify-email', name: 'verify-email', component: VerifyEmailView, meta: { public: true } },
+    { path: '/aszf', name: 'aszf', component: AszfView, meta: { public: true } },
+    { path: '/adatvedelem', name: 'adatvedelem', component: AdatvedelemView, meta: { public: true } },
     { path: '/', name: 'felvasarlas', component: FelvasarlasView },
     { path: '/eladas', name: 'eladas', component: EladasView },
     { path: '/egyenleg', name: 'egyenleg', component: EgyenlegView }
