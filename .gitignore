@@ -1,0 +1,175 @@
+# =========================================================
+# RekeszNyilvantarto
+# .gitignore
+# =========================================================
+
+
+# =========================================================
+# .NET / ASP.NET Core
+# =========================================================
+
+bin/
+obj/
+
+.vs/
+.vscode/
+.idea/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+
+# =========================================================
+# ASP.NET Core konfiguráció / TITKOK
+# =========================================================
+
+# Valódi konfigurációs fájlok
+appsettings.json
+appsettings.*.json
+
+# Példa konfiguráció MEHET GitHubra
+!appsettings.example.json
+
+# Lokális / titkos konfigurációk
+appsettings.Local.json
+appsettings.*.local.json
+
+secrets.json
+secrets.*.json
+Secrets/
+secrets/
+
+
+# =========================================================
+# Environment változók
+# =========================================================
+
+.env
+.env.*
+!.env.example
+
+
+# =========================================================
+# Publish / deployment
+# =========================================================
+
+**/[Pp]ublish/
+
+*.pubxml
+*.pubxml.user
+
+
+# =========================================================
+# Tanúsítványok / privát kulcsok
+# =========================================================
+
+*.pfx
+*.p12
+
+*.pem
+*.key
+
+# Tanúsítványfájlok
+*.crt
+*.cer
+
+
+# =========================================================
+# SSH / service account / cloud credential fájlok
+# =========================================================
+
+id_rsa
+id_rsa.pub
+
+id_ed25519
+id_ed25519.pub
+
+credentials.json
+service-account.json
+service-account*.json
+
+
+# =========================================================
+# Adatbázis / backup fájlok
+# =========================================================
+
+*.sql
+*.sql.gz
+*.bak
+*.backup
+*.dump
+
+
+# =========================================================
+# Lokálisan létrejövő feltöltött fájlok
+# =========================================================
+
+RekeszNyilvantarto/private/
+RekeszNyilvantarto/wwwroot/uploads/
+
+# Ha a backend projekt neve más, szükség esetén igazítsd
+# a fenti két útvonalat.
+
+
+# =========================================================
+# Logok
+# =========================================================
+
+*.log
+logs/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# =========================================================
+# Vue / Node.js
+# =========================================================
+
+node_modules/
+
+dist/
+dist-ssr/
+
+*.local
+
+
+# =========================================================
+# IDE / editor
+# =========================================================
+
+.vscode/*
+!.vscode/extensions.json
+
+.idea/
+
+
+# =========================================================
+# OS
+# =========================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# =========================================================
+# Temporary files
+# =========================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+
+# =========================================================
+# Coverage / test output
+# =========================================================
+
+TestResults/
+coverage/
