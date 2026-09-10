@@ -4,6 +4,7 @@ namespace RekeszAppBackend.Contracts;
 
 public record LoginRequest(string Email, string Jelszo);
 public record RegisterRequest(string Email, string Jelszo, bool ElfogadjaAszf);
+public record ResendVerificationRequest(string Email);
 
 public record PartnerRequest(string Nev, string? Megjegyzes);
 public record VevoRequest(string? Nev, string? Megjegyzes);
