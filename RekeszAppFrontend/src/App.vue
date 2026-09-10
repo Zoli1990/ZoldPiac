@@ -20,16 +20,16 @@ function kijelentkezes() {
   <header v-if="bejelentkezve">
     <div class="brand">
       <div class="crate-mark"></div>
-      <div><div class="brand-text">Rekesz</div><div class="brand-sub">Piaci rekeszkövetés</div></div>
+      <div><div class="brand-text">ZoldPiac</div><div class="brand-sub">Piaci rekeszkövetés</div></div>
     </div>
     <nav>
-      <RouterLink v-if="auth.role === 'Admin'" to="/" :class="{ active: route.name === 'felvasarlas' }">Felvásárlás</RouterLink>
-      <RouterLink v-if="auth.role === 'Admin'" to="/eladas" :class="{ active: route.name === 'eladas' }">Eladás</RouterLink>
+      <RouterLink to="/" :class="{ active: route.name === 'felvasarlas' }">Felvásárlás</RouterLink>
+      <RouterLink to="/eladas" :class="{ active: route.name === 'eladas' }">Eladás</RouterLink>
       <RouterLink to="/egyenleg" :class="{ active: route.name === 'egyenleg' }">Egyenleg</RouterLink>
     </nav>
     <div class="user">
       <button class="calc-button" title="Számológép" @click="showCalculator = true">🧮 <span class="calc-label">Számológép</span></button>
-      <span>{{ auth.felhasznalonev }}</span>
+      <span>{{ auth.email }}</span>
       <button class="btn-secondary" @click="kijelentkezes">Kilépés</button>
     </div>
   </header>
