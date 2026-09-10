@@ -25,9 +25,11 @@ public class EladasController(AppDbContext db) : ControllerBase
             else
                 query = query.Where(x => x.Zoldseg.Nev.Contains(term) || (x.Vevo != null && ((x.Vevo.Nev != null && x.Vevo.Nev.Contains(term)) || (x.Vevo.Megjegyzes != null && x.Vevo.Megjegyzes.Contains(term)))));
         }
-        var tetelek = await query.Include(x => x.Vevo).Include(x => x.Zoldseg).Include(x => x.RekeszTipus)
+        var tetelek = await query
+            .Include(x => x.Vevo).Include(x => x.Zoldseg).Include(x => x.RekeszTipus)
             .OrderBy(x => x.NapiSorszam)
-            .Select(x => new { x.Id, x.NapiSorszam, x.Datum, x.Ido, x.VevoId, vevoNev = x.Vevo != null ? x.Vevo.Nev : null, x.ZoldsegId, zoldsegNev = x.Zoldseg.Nev, zoldsegKepUrl = x.Zoldseg.KepUrl, x.RekeszTipusId, rekeszTipus = x.RekeszTipus.Nev, x.Mennyiseg, x.Fizetve, x.Elvitte, x.VisszahozottDb, x.HianyFizettDb, x.Egysegar, x.Megjegyzes }).ToListAsync();
+            .Select(x => new { x.Id, x.NapiSorszam, x.Datum, x.Ido, x.VevoId, vevoNev = x.Vevo != null ? x.Vevo.Nev : null, x.ZoldsegId, zoldsegNev = x.Zoldseg.Nev, zoldsegKepUrl = x.Zoldseg.KepUrl, x.RekeszTipusId, rekeszTipus = x.RekeszTipus.Nev, x.Mennyiseg, x.Fizetve, x.Elvitte, x.VisszahozottDb, x.HianyFizettDb, x.Egysegar, x.Megjegyzes })
+            .ToListAsync();
         return Ok(tetelek);
     }
 
@@ -41,23 +43,51 @@ public class EladasController(AppDbContext db) : ControllerBase
         return null;
     }
 
+    private async Task<bool> ReferenciakSajatUserhezTartoznak(EladasRequest r)
+    {
+        if (!await db.Zoldsegek.AnyAsync(x => x.Id == r.ZoldsegId)) return false;
+        if (!await db.RekeszTipusok.AnyAsync(x => x.Id == r.RekeszTipusId)) return false;
+        return !r.VevoId.HasValue || await db.Vevek.AnyAsync(x => x.Id == r.VevoId.Value);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Uj(EladasRequest request)
     {
         var hiba = Validal(request);
         if (hiba is not null) return hiba;
+        if (!await ReferenciakSajatUserhezTartoznak(request)) return NotFound();
         var strategy = db.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () => { await using var tx = await db.Database.BeginTransactionAsync(); int? vevoId=request.VevoId; var vanUjVevoAdat=!string.IsNullOrWhiteSpace(request.UjVevoNev)||!string.IsNullOrWhiteSpace(request.UjVevoMegjegyzes); if(vevoId is null&&vanUjVevoAdat){var ujVevo=new Vevo{Nev=string.IsNullOrWhiteSpace(request.UjVevoNev)?null:request.UjVevoNev!.Trim(),Megjegyzes=string.IsNullOrWhiteSpace(request.UjVevoMegjegyzes)?null:request.UjVevoMegjegyzes!.Trim()};db.Vevek.Add(ujVevo);await db.SaveChangesAsync();vevoId=ujVevo.Id;} var datum=request.Datum??DateOnly.FromDateTime(DateTime.Today);var napiSorszam=(await db.EladasTetelek.Where(x=>x.Datum==datum).MaxAsync(x=>(int?)x.NapiSorszam)??0)+1;var entity=new EladasTetel{NapiSorszam=napiSorszam,Datum=datum,Ido=DateTime.Now,VevoId=vevoId,ZoldsegId=request.ZoldsegId,RekeszTipusId=request.RekeszTipusId,Mennyiseg=request.Mennyiseg,Fizetve=request.Fizetve,Elvitte=request.Elvitte,VisszahozottDb=request.VisszahozottDb,HianyFizettDb=request.HianyFizettDb,Egysegar=request.Egysegar,Megjegyzes=string.IsNullOrWhiteSpace(request.Megjegyzes)?null:request.Megjegyzes!.Trim()};db.EladasTetelek.Add(entity);await db.SaveChangesAsync();await tx.CommitAsync();return Created($"api/eladas/{entity.Id}",entity);});
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await db.Database.BeginTransactionAsync();
+            int? vevoId = request.VevoId;
+            var vanUjVevoAdat = !string.IsNullOrWhiteSpace(request.UjVevoNev) || !string.IsNullOrWhiteSpace(request.UjVevoMegjegyzes);
+            if (vevoId is null && vanUjVevoAdat)
+            {
+                var ujVevo = new Vevo { Nev = string.IsNullOrWhiteSpace(request.UjVevoNev) ? null : request.UjVevoNev.Trim(), Megjegyzes = string.IsNullOrWhiteSpace(request.UjVevoMegjegyzes) ? null : request.UjVevoMegjegyzes.Trim() };
+                db.Vevek.Add(ujVevo);
+                await db.SaveChangesAsync();
+                vevoId = ujVevo.Id;
+            }
+            var datum = request.Datum ?? DateOnly.FromDateTime(DateTime.Today);
+            var napiSorszam = (await db.EladasTetelek.Where(x => x.Datum == datum).MaxAsync(x => (int?)x.NapiSorszam) ?? 0) + 1;
+            var entity = new EladasTetel { NapiSorszam = napiSorszam, Datum = datum, Ido = DateTime.Now, VevoId = vevoId, ZoldsegId = request.ZoldsegId, RekeszTipusId = request.RekeszTipusId, Mennyiseg = request.Mennyiseg, Fizetve = request.Fizetve, Elvitte = request.Elvitte, VisszahozottDb = request.VisszahozottDb, HianyFizettDb = request.HianyFizettDb, Egysegar = request.Egysegar, Megjegyzes = string.IsNullOrWhiteSpace(request.Megjegyzes) ? null : request.Megjegyzes.Trim() };
+            db.EladasTetelek.Add(entity);
+            await db.SaveChangesAsync();
+            await tx.CommitAsync();
+            return Created($"api/eladas/{entity.Id}", entity);
+        });
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Modosit(int id, EladasRequest request)
     {
-        var entity = await db.EladasTetelek.FindAsync(id);
+        var entity = await db.EladasTetelek.SingleOrDefaultAsync(x => x.Id == id);
         if (entity is null) return NotFound();
         var hiba = Validal(request);
         if (hiba is not null) return hiba;
-        entity.VevoId=request.VevoId;entity.ZoldsegId=request.ZoldsegId;entity.RekeszTipusId=request.RekeszTipusId;entity.Mennyiseg=request.Mennyiseg;entity.Fizetve=request.Fizetve;entity.Elvitte=request.Elvitte;entity.VisszahozottDb=request.VisszahozottDb;entity.HianyFizettDb=request.HianyFizettDb;entity.Egysegar=request.Egysegar;entity.Megjegyzes=string.IsNullOrWhiteSpace(request.Megjegyzes)?null:request.Megjegyzes!.Trim();
+        if (!await ReferenciakSajatUserhezTartoznak(request)) return NotFound();
+        entity.VevoId = request.VevoId; entity.ZoldsegId = request.ZoldsegId; entity.RekeszTipusId = request.RekeszTipusId; entity.Mennyiseg = request.Mennyiseg; entity.Fizetve = request.Fizetve; entity.Elvitte = request.Elvitte; entity.VisszahozottDb = request.VisszahozottDb; entity.HianyFizettDb = request.HianyFizettDb; entity.Egysegar = request.Egysegar; entity.Megjegyzes = string.IsNullOrWhiteSpace(request.Megjegyzes) ? null : request.Megjegyzes.Trim();
         await db.SaveChangesAsync();
         return Ok(entity);
     }
@@ -67,24 +97,21 @@ public class EladasController(AppDbContext db) : ControllerBase
     [HttpPatch("{id:int}/allapot")]
     public async Task<IActionResult> Allapot(int id, AllapotRequest request)
     {
-        var entity = await db.EladasTetelek.FindAsync(id);
+        var entity = await db.EladasTetelek.SingleOrDefaultAsync(x => x.Id == id);
         if (entity is null) return NotFound();
         if (request.Fizetve.HasValue) entity.Fizetve = request.Fizetve.Value;
         if (request.Elvitte.HasValue) entity.Elvitte = request.Elvitte.Value;
         if (request.VisszahozottDb.HasValue)
         {
-            if (request.VisszahozottDb.Value < 0 || request.VisszahozottDb.Value > entity.Mennyiseg)
-                return BadRequest(new { message = "A visszahozott mennyiség 0 és a teljes mennyiség között kell legyen." });
+            if (request.VisszahozottDb.Value < 0 || request.VisszahozottDb.Value > entity.Mennyiseg) return BadRequest(new { message = "A visszahozott mennyiség 0 és a teljes mennyiség között kell legyen." });
             entity.VisszahozottDb = request.VisszahozottDb.Value;
-            // ha a visszahozott mennyiség csökken, a korábban rögzített hiány-kifizetés nem lehet nagyobb az új hiánynál
             var ujHiany = entity.Mennyiseg - entity.VisszahozottDb;
             if (entity.HianyFizettDb > ujHiany) entity.HianyFizettDb = ujHiany;
         }
         if (request.HianyFizettDb.HasValue)
         {
             var hiany = entity.Mennyiseg - entity.VisszahozottDb;
-            if (request.HianyFizettDb.Value < 0 || request.HianyFizettDb.Value > hiany)
-                return BadRequest(new { message = "A kifizetett hiány nem lehet negatív, és nem lehet több, mint a vissza nem hozott rekeszek száma." });
+            if (request.HianyFizettDb.Value < 0 || request.HianyFizettDb.Value > hiany) return BadRequest(new { message = "A kifizetett hiány nem lehet negatív, és nem lehet több, mint a vissza nem hozott rekeszek száma." });
             entity.HianyFizettDb = request.HianyFizettDb.Value;
         }
         await db.SaveChangesAsync();
@@ -94,7 +121,7 @@ public class EladasController(AppDbContext db) : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Torol(int id)
     {
-        var entity = await db.EladasTetelek.FindAsync(id);
+        var entity = await db.EladasTetelek.SingleOrDefaultAsync(x => x.Id == id);
         if (entity is null) return NotFound();
         db.EladasTetelek.Remove(entity);
         await db.SaveChangesAsync();
