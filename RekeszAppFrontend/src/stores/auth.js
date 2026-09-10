@@ -4,27 +4,32 @@ import client from '../api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const felhasznalonev = ref(localStorage.getItem('felhasznalonev') || '')
+  const email = ref(localStorage.getItem('email') || '')
   const role = ref(localStorage.getItem('role') || '')
+  const userId = ref(Number(localStorage.getItem('userId') || 0))
 
-  async function login(nev, jelszo) {
-    const res = await client.post('/auth/login', { felhasznalonev: nev, jelszo })
+  async function login(emailCim, jelszo) {
+    const res = await client.post('/auth/login', { email: emailCim, jelszo })
     token.value = res.data.token
-    felhasznalonev.value = res.data.felhasznalonev
+    email.value = res.data.email
     role.value = res.data.role
+    userId.value = Number(res.data.userId)
     localStorage.setItem('token', token.value)
-    localStorage.setItem('felhasznalonev', felhasznalonev.value)
+    localStorage.setItem('email', email.value)
     localStorage.setItem('role', role.value)
+    localStorage.setItem('userId', String(userId.value))
   }
 
   function logout() {
     token.value = ''
-    felhasznalonev.value = ''
+    email.value = ''
     role.value = ''
+    userId.value = 0
     localStorage.removeItem('token')
-    localStorage.removeItem('felhasznalonev')
+    localStorage.removeItem('email')
     localStorage.removeItem('role')
+    localStorage.removeItem('userId')
   }
 
-  return { token, felhasznalonev, role, login, logout }
+  return { token, email, role, userId, login, logout }
 })
