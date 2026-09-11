@@ -71,7 +71,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        app.Logger.LogCritical(ex, "Adatbázis inicializálás sikertelen induláskor - az app enélkül indul tovább.");
+        app.Logger.LogCritical(ex, "Adatbázis inicializálás sikertelen induláskor.");
+        throw;
     }
 }
 
