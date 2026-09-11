@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RekeszAppBackend.Migrations;
 
-[Migration("20260910233000_MultiUserAccounts")]
 public partial class MultiUserAccounts : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
