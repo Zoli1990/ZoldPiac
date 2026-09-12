@@ -45,6 +45,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ZoldPiac API", Version = "v2" });
+
+    // Azonos nevű DTO-k esetén is egyedi Swagger schema ID-t használ
+    c.CustomSchemaIds(type => type.FullName);
+
     var jwtScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -55,8 +59,12 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
     };
+
     c.AddSecurityDefinition("Bearer", jwtScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtScheme, Array.Empty<string>() } });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { jwtScheme, Array.Empty<string>() }
+    });
 });
 
 var app = builder.Build();
