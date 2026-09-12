@@ -24,8 +24,10 @@ public static class UploadsPaths
         if (string.IsNullOrWhiteSpace(kepUrl) || !kepUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
         try
         {
-            var fileName = Path.GetFileName(kepUrl["/uploads/".Length..]);
+            var relativePath = kepUrl["/uploads/".Length..].TrimStart('/');
+            var fileName = Path.GetFileName(relativePath);
             if (string.IsNullOrWhiteSpace(fileName)) return;
+
             var filePath = Path.Combine(Resolve(env, config, userId), fileName);
             if (File.Exists(filePath)) File.Delete(filePath);
         }
