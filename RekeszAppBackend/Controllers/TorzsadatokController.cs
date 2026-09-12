@@ -54,7 +54,7 @@ public class TorzsadatokController(AppDbContext db, IWebHostEnvironment env, ICo
     {
         var entity = new Vevo { Nev = UresbolNull(request.Nev), Megjegyzes = UresbolNull(request.Megjegyzes) };
         db.Vevek.Add(entity); await db.SaveChangesAsync();
-        return Created($"api/vevek/{entity.Id}", entity);
+        return Created($"api/vevеk/{entity.Id}", entity);
     }
 
     [HttpPut("vevek/{id:int}")]
@@ -133,7 +133,7 @@ public class TorzsadatokController(AppDbContext db, IWebHostEnvironment env, ICo
             return BadRequest(new { message = "A fájl nem értelmezhető képként." });
         }
         UploadsPaths.DeleteIfExists(env, config, userId, entity.KepUrl);
-        entity.KepUrl = "/uploads/" + fileName;
+        entity.KepUrl = $"/uploads/{userId}/{fileName}";
         await db.SaveChangesAsync(); return Ok(entity);
     }
 
