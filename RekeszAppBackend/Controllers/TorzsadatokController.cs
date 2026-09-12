@@ -54,7 +54,7 @@ public class TorzsadatokController(AppDbContext db, IWebHostEnvironment env, ICo
     {
         var entity = new Vevo { Nev = UresbolNull(request.Nev), Megjegyzes = UresbolNull(request.Megjegyzes) };
         db.Vevek.Add(entity); await db.SaveChangesAsync();
-        return Created($"api/vevеk/{entity.Id}", entity);
+        return Created($"api/vevek/{entity.Id}", entity);
     }
 
     [HttpPut("vevek/{id:int}")]
