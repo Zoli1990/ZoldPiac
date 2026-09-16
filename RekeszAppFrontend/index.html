@@ -1,10 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="hu">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#064c21" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ZöldPiac" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rekeszappfrontend</title>
+    <style>
+      @media (max-width: 650px) {
+        .mobile-tile {
+          position: relative;
+          padding-right: 54px;
+        }
+        .mobile-tile::after {
+          content: '✏️';
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 34px;
+          height: 34px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(43,58,46,.2);
+          border-radius: 8px;
+          background: #fff;
+          font-size: 15px;
+          pointer-events: none;
+        }
+      }
+    </style>
+    <title>ZöldPiac — friss zöldségek, okosan. Online.</title>
   </head>
   <body>
     <div id="app"></div>

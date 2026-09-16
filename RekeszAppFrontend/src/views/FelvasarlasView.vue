@@ -7,7 +7,8 @@ import Gyorskereso from '../components/Gyorskereso.vue'
 
 const items=ref([]),partnerek=ref([]),zoldsegek=ref([]),rekesztipusok=ref([]),raktar=ref([])
 const hiba=ref(''),betolt=ref(true),datum=ref(today())
-const showPartnerModal=ref(false),showZoldsegModal=ref(false),showRekeszModal=ref(false),editId=ref(null),editForm=ref({})
+const showPartnerModal=ref(false),showVevoModal=ref(false),showZoldsegModal=ref(false),showRekeszModal=ref(false),editId=ref(null),editForm=ref({})
+const vevek=ref([])
 const form=ref({sajatTermek:false,partnerId:'',zoldsegId:'',rekeszTipusId:'',mennyiseg:'',fizetve:false,adottRekeszDb:0,egysegar:'',megjegyzes:'',helyszin:'Kocsi'})
 const athelyezesStock=ref(null),athelyezesForm=ref({mennyiseg:1,celDatum:''}),athelyezesHiba=ref('')
 const raktarDetail=ref(null)
@@ -17,7 +18,7 @@ function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('hu-HU')}
 const apiRoot=client.defaults.baseURL.replace(/\/api\/?$/,'')
 function kepSrc(u){return u?.startsWith('http')?u:apiRoot+u}
 function clampDigits(v,n){const d=String(v??'').replace(/[^0-9]/g,'').slice(0,n);return d===''?'':Number(d)}
-async function torzsadatok(){try{const[p,z,r]=await Promise.all([client.get('/partnerek'),client.get('/zoldsegek'),client.get('/rekesztipusok')]);partnerek.value=p.data;zoldsegek.value=z.data;rekesztipusok.value=r.data}catch{hiba.value='Nem sikerült betölteni a törzsadatokat.'}}
+async function torzsadatok(){try{const[p,v,z,r]=await Promise.all([client.get('/partnerek'),client.get('/vevek'),client.get('/zoldsegek'),client.get('/rekesztipusok')]);partnerek.value=p.data;vevek.value=v.data;zoldsegek.value=z.data;rekesztipusok.value=r.data}catch{hiba.value='Nem sikerült betölteni a törzsadatokat.'}}
 async function frissitRaktar(){try{raktar.value=(await client.get('/felvasarlas/raktar-csoportos')).data}catch{hiba.value='Nem sikerült betölteni a raktárkészletet.'}}
 async function frissit(){betolt.value=true;hiba.value='';try{items.value=(await client.get('/felvasarlas',{params:{datum:datum.value}})).data}catch{hiba.value='Nem sikerült betölteni a felvásárlásokat.'}finally{betolt.value=false}await frissitRaktar()}
 onMounted(async()=>{await torzsadatok();await frissit()});watch(datum,frissit)
@@ -26,6 +27,7 @@ function adottRekeszValt(e){form.value.adottRekeszDb=clampDigits(e.target.value,
 function zoldsegLetrehozva(z){zoldsegek.value.push(z)}
 function rekeszLetrehozva(r){rekesztipusok.value.push(r)}
 function partnerLetrehozva(p){partnerek.value.push(p)}
+function vevoLetrehozva(v){vevek.value.push(v)}
 
 function triggerFotoInput(){hiba.value='';if(!form.value.zoldsegId){hiba.value='Előbb válassz vagy ments egy zöldséget.';return}fotoInput.value.click()}
 async function fotoValasztva(e){
@@ -87,6 +89,17 @@ function zarFelvCsoportDetail(){felvCsoportDetail.value=null}
 function szerkesztCsoportTetelet(item){zarFelvCsoportDetail();nyitFelvDetail(item)}
 function zarFelvDetail(){felvDetail.value=null;editId.value=null}
 async function mentesModalbol(){await mentSzerkesztes(felvDetail.value.id);if(!hiba.value)zarFelvDetail()}
+function holnap(d){const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)}
+async function athelyezFelvasarlasMasnapra(i){
+  hiba.value=''
+  const celDatum=holnap(i.datum)
+  if(!confirm(`A #${i.napiSorszam} felvásárlást áthelyezed ${celDatum} napra? Az eredeti tétel a ${fmtDate(i.datum)} napon megszűnik.`))return
+  try{
+    await client.post('/felvasarlas/atvitel',{felvasarlasTetelId:i.id,mennyiseg:Number(i.mennyiseg),celDatum})
+    zarFelvDetail()
+    await frissit()
+  }catch(e){hiba.value=e.response?.data?.message||'Áthelyezés sikertelen.'}
+}
 async function torolModalbol(){const it=felvDetail.value;if(!confirm(`Törlöd a #${it.napiSorszam} tételt (${it.zoldsegNev})?`))return;try{await client.delete(`/felvasarlas/${it.id}`);zarFelvDetail();await frissit()}catch{hiba.value='Törlés sikertelen.'}}
 
 function nyitRaktarDetail(s){raktarDetail.value=s}
@@ -151,7 +164,7 @@ async function torol(i){if(!confirm(`Törlöd a #${i.napiSorszam} tételt (${i.z
       <p v-if="hiba" class="hiba">{{hiba}}</p>
       <button class="btn-primary" @click="ujTetel">Felvásárlás mentése</button>
       <div class="torzsadat-linkek">
-        <button type="button" class="link-btn" @click="showPartnerModal=true">Eladók kezelése</button>
+        <button type="button" class="link-btn" @click="showPartnerModal=true">Eladók kezelése</button><button type="button" class="link-btn" @click="showVevoModal=true">Vevők kezelése</button>
         <button type="button" class="link-btn" @click="showZoldsegModal=true">Zöldségek kezelése</button>
         <button type="button" class="link-btn" @click="showRekeszModal=true">Rekesztípusok kezelése</button>
       </div>
@@ -251,7 +264,7 @@ async function torol(i){if(!confirm(`Törlöd a #${i.napiSorszam} tételt (${i.z
       </div>
       <label>Megjegyzés<input v-model="editForm.megjegyzes" /></label>
       <p v-if="hiba" class="hiba">{{hiba}}</p>
-      <div class="nav-row"><button type="button" class="btn-secondary" @click="torolModalbol">🗑️ Törlés</button><button type="button" class="btn-primary" @click="mentesModalbol">Mentés</button></div>
+      <div class="nav-row"><button type="button" class="btn-primary" @click="athelyezFelvasarlasMasnapra(felvDetail)">📅 Áthelyezés másnapra</button><button type="button" class="btn-secondary" @click="torolModalbol">🗑️ Törlés</button><button type="button" class="btn-primary" @click="mentesModalbol">Mentés</button></div>
     </div>
   </div>
 
@@ -269,7 +282,7 @@ async function torol(i){if(!confirm(`Törlöd a #${i.napiSorszam} tételt (${i.z
     </div>
   </div>
 
-  <TorzsadatModal v-if="showPartnerModal" title="Eladók" api-path="/partnerek" nev-label="Eladó neve" @close="showPartnerModal=false" @changed="torzsadatok"/><ZoldsegModal v-if="showZoldsegModal" @close="showZoldsegModal=false" @changed="torzsadatok"/><TorzsadatModal v-if="showRekeszModal" title="Rekesztípusok" api-path="/rekesztipusok" nev-label="Rekesztípus (pl. M10)" :mutat-megjegyzes="false" @close="showRekeszModal=false" @changed="torzsadatok"/>
+  <TorzsadatModal v-if="showPartnerModal" title="Eladók" api-path="/partnerek" nev-label="Eladó neve" @close="showPartnerModal=false" @changed="torzsadatok"/><TorzsadatModal v-if="showVevoModal" title="Vevők" api-path="/vevek" nev-label="Vevő neve / azonosítója" :nev-kotelezo="false" nev-placeholder="Név, rendszám vagy üresen hagyható" @close="showVevoModal=false" @changed="torzsadatok"/><ZoldsegModal v-if="showZoldsegModal" @close="showZoldsegModal=false" @changed="torzsadatok"/><TorzsadatModal v-if="showRekeszModal" title="Rekesztípusok" api-path="/rekesztipusok" nev-label="Rekesztípus (pl. M10)" :mutat-megjegyzes="false" @close="showRekeszModal=false" @changed="torzsadatok"/>
 </template>
 <style scoped>
 .toolbar-row{display:flex;gap:10px;align-items:end;margin-bottom:14px}.toolbar-row label{flex:1}.date-picker{max-width:180px}.search{min-width:220px}.grid{display:grid;grid-template-columns:1fr 1.4fr;gap:18px;align-items:start}.card{background:var(--paper);border:1px solid rgba(43,58,46,.12);border-radius:10px;padding:18px}.history-card{overflow:hidden}h2{margin:0 0 12px;font-size:16px;color:var(--chalk-green)}.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.wizard-btn{background:var(--chalk-green);color:var(--paper);border:0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--olive);text-transform:uppercase;letter-spacing:.03em;margin-bottom:10px}label.checkbox{flex-direction:row;align-items:center;gap:8px}.small{font-size:10px}.with-icon{display:flex;gap:6px}.with-icon select{flex:1}.price-input{max-width:120px!important}.table-wrap{overflow-x:auto}table{font-size:12px;min-width:820px}.thumb{width:34px;height:34px;object-fit:cover;border-radius:6px;display:block}.muted,.ures{color:var(--olive)}.ures{text-align:center;padding:16px}.hiba{color:#b3441e;font-size:13px}@media(max-width:900px){.grid{grid-template-columns:1fr}}@media(max-width:650px){.toolbar-row{flex-direction:column;align-items:stretch}.date-picker,.search{max-width:none;min-width:0}.date-picker input{width:100%;box-sizing:border-box}.row{grid-template-columns:1fr}.section-head{flex-direction:column;align-items:stretch}.card input,.card select{box-sizing:border-box;max-width:100%}.felv-detail-modal,.felv-csoport-modal,.athelyez-modal{max-width:100%}}

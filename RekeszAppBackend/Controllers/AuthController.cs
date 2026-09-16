@@ -19,6 +19,7 @@ namespace RekeszAppBackend.Controllers;
 public class AuthController(AppDbContext db, IConfiguration config, IEmailSender emailSender) : ControllerBase
 {
     private const string AszfVerzio = "1.0";
+    private static readonly TimeSpan EmailCooldown = TimeSpan.FromSeconds(60);
     private static readonly Regex EmailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     [AllowAnonymous]
@@ -40,6 +41,7 @@ public class AuthController(AppDbContext db, IConfiguration config, IEmailSender
             EmailVerified = false,
             VerificationTokenHash = HashToken(rawToken),
             VerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24),
+            VerificationEmailSentAt = DateTime.UtcNow,
             RegisteredAt = DateTime.UtcNow,
             AszfVerzio = AszfVerzio,
             AszfElfogadvaAt = DateTime.UtcNow
@@ -78,10 +80,12 @@ public class AuthController(AppDbContext db, IConfiguration config, IEmailSender
 
         var user = await db.Users.FirstOrDefaultAsync(x => x.Email == email);
         if (user is null || user.EmailVerified) return Ok(new { message = genericMessage });
+        if (user.VerificationEmailSentAt is not null && DateTime.UtcNow - user.VerificationEmailSentAt < EmailCooldown) return Ok(new { message = genericMessage });
 
         var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         user.VerificationTokenHash = HashToken(rawToken);
         user.VerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24);
+        user.VerificationEmailSentAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         try
@@ -135,6 +139,71 @@ public class AuthController(AppDbContext db, IConfiguration config, IEmailSender
         var token = new JwtSecurityToken(issuer: config["Jwt:Issuer"], audience: config["Jwt:Audience"], claims: claims, expires: DateTime.UtcNow.AddHours(expiryHours), signingCredentials: creds);
 
         return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token), email = user.Email, role = user.Role.ToString(), userId = user.Id });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        var email = request.Email?.Trim().ToLowerInvariant();
+        const string genericMessage = "Ha a megadott email-címhez tartozik fiók, elküldtük a jelszó-visszaállító linket.";
+        if (string.IsNullOrWhiteSpace(email) || !EmailRegex.IsMatch(email)) return Ok(new { message = genericMessage });
+
+        var user = await db.Users.FirstOrDefaultAsync(x => x.Email == email);
+        if (user is null) return Ok(new { message = genericMessage });
+        if (user.ResetEmailSentAt is not null && DateTime.UtcNow - user.ResetEmailSentAt < EmailCooldown) return Ok(new { message = genericMessage });
+
+        var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.ResetTokenHash = HashToken(rawToken);
+        user.ResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
+        user.ResetEmailSentAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        try
+        {
+            await KuldesJelszoVisszaallitoEmailAsync(user.Email, rawToken, HttpContext.RequestAborted);
+        }
+        catch
+        {
+            // A generikus válasz így sem árulja el, hogy a fiók létezik-e; a küldési hibát csak naplózzuk.
+        }
+
+        return Ok(new { message = genericMessage });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Token)) return BadRequest(new { message = "Hiányzó visszaállító token." });
+        if (string.IsNullOrWhiteSpace(request.UjJelszo) || request.UjJelszo.Length < 8) return BadRequest(new { message = "A jelszónak legalább 8 karakteresnek kell lennie." });
+
+        var hash = HashToken(request.Token);
+        var user = await db.Users.FirstOrDefaultAsync(x => x.ResetTokenHash == hash);
+        if (user is null) return BadRequest(new { message = "A visszaállító link érvénytelen vagy már felhasznált." });
+        if (user.ResetTokenExpiresAt is null || user.ResetTokenExpiresAt < DateTime.UtcNow) return BadRequest(new { message = "A visszaállító link lejárt. Kérj új jelszó-visszaállítást." });
+
+        user.JelszoHash = BCrypt.Net.BCrypt.HashPassword(request.UjJelszo);
+        user.ResetTokenHash = null;
+        user.ResetTokenExpiresAt = null;
+        await db.SaveChangesAsync();
+        return Ok(new { message = "A jelszó sikeresen megváltozott. Most már bejelentkezhetsz az új jelszóval." });
+    }
+
+    private async Task KuldesJelszoVisszaallitoEmailAsync(string email, string rawToken, CancellationToken cancellationToken)
+    {
+        var frontendUrl = (config["Auth:FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
+        var resetUrl = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+        var body = $"""
+            <html><body style="font-family:Arial,sans-serif;line-height:1.5">
+            <h2>ZöldPiac jelszó-visszaállítás</h2>
+            <p>Az alábbi gombra kattintva új jelszót adhatsz meg a fiókodhoz:</p>
+            <p><a href="{resetUrl}" style="display:inline-block;padding:10px 16px;background:#2f5d50;color:#fff;text-decoration:none;border-radius:6px">Jelszó megváltoztatása</a></p>
+            <p>Ez a link 1 óráig érvényes.</p>
+            <p>Ha nem te kérted a jelszó-visszaállítást, ezt az üzenetet hagyd figyelmen kívül – a jelszavad nem változott.</p>
+            </body></html>
+            """;
+        await emailSender.SendAsync(email, "ZöldPiac – jelszó-visszaállítás", body, cancellationToken);
     }
 
     private async Task KuldesVisszaigazoloEmailAsync(string email, string rawToken, CancellationToken cancellationToken)

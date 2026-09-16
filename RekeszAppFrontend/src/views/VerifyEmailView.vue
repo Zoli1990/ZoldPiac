@@ -29,7 +29,8 @@ onMounted(async () => {
 
 <template>
   <div class="card auth-card">
-    <h2>ZoldPiac — email visszaigazolás</h2>
+    <img class="brand" src="/brand-zoldpiac.png" alt="ZöldPiac — friss zöldségek, okosan. Online." />
+    <h2>Email visszaigazolás</h2>
     <p :class="{ hiba, siker: !hiba }">{{ uzenet }}</p>
     <RouterLink class="btn-primary" to="/login">Belépés</RouterLink>
   </div>
@@ -37,7 +38,8 @@ onMounted(async () => {
 
 <style scoped>
 .auth-card { max-width: 420px; margin: 0 auto; }
-h2 { margin-top: 0; font-size: 18px; color: var(--chalk-green); }
+.brand { display: block; width: 100%; max-width: 220px; margin: 0 auto 14px; height: auto; }
+h2 { margin-top: 0; font-size: 18px; color: var(--chalk-green); text-align: center; }
 p { line-height: 1.5; padding: 10px; border-radius: 8px; }
 .siker { background: #eaf5ea; }
 .hiba { background: #faece8; }

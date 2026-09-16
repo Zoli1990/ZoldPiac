@@ -8,8 +8,6 @@ public partial class MultiUserAccounts : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.Sql("DELETE FROM `Users` WHERE `Felhasznalonev` = 'admin';");
-
         migrationBuilder.DropIndex(name: "IX_Users_Felhasznalonev", table: "Users");
         migrationBuilder.RenameColumn(name: "Felhasznalonev", table: "Users", newName: "Email");
         migrationBuilder.AlterColumn<string>(name: "Email", table: "Users", type: "varchar(320)", maxLength: 320, nullable: false, oldClrType: typeof(string), oldType: "longtext");

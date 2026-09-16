@@ -1,191 +1,108 @@
-# ZoldPiac – fejlesztési és üzemeltetési dokumentáció
+# ZöldPiac – fejlesztési és üzemeltetési dokumentáció
 
-Ez a repository a **Piac / RekeszApp projekt továbbfejlesztett, többfelhasználós változata**.
+**Friss zöldségek, okosan. Online.**
 
-A `ZoldPiac` önálló fejlesztési és tesztelési ágként működik, saját frontenddel, backenddel és adatbázissal. A projekt célja, hogy a korábbi, egyfelhasználós működésből egy valóban több ügyfél által használható webes szolgáltatás alakuljon ki.
+Zöldségpiaci nyilvántartó webalkalmazás többfelhasználós működéssel: felvásárlások, saját termés, eladások, rekeszek és készlet, partnerek és vevők, egyenlegek és tartozások nyilvántartása.
 
-> **Fontos:** ez a dokumentum az aktuális `ZoldPiac` projekt állapotát és a későbbi fejlesztések üzleti/technikai irányát rögzíti. A korábbi `Piac` repository már nem a fejlesztés alapja.
+Ez a `ZoldPiac` repository a `Piac / RekeszApp` projekt továbbfejlesztett, **többfelhasználós** változata: saját frontend, backend és adatbázis, önálló fejlesztési ágként. A korábbi `Piac` repository már nem a fejlesztés alapja.
+
+> Ez az egyetlen, karbantartott README. Korábban két, részben átfedő/elavult dokumentum élt egymás mellett (`README.md` és `README_folyt-kov.md`); ezek tartalma itt lett egyesítve és frissítve a jelenlegi kódállapotra.
 
 ---
 
-## 1. Projektcél
+## 1. Jelenlegi állapot (röviden)
 
-A rendszer egy piaci / zöldség-kereskedelmi működéshez készült webalkalmazás.
+A többfelhasználós alapok **el vannak készítve és működnek**:
 
-Fő funkciói:
+- ✅ `admin/admin` megszűnt, nincs előre létrehozott közös fiók.
+- ✅ Email-címes regisztráció.
+- ✅ Emailes visszaigazolás (24 órás, hash-elt token) — bejelentkezni csak visszaigazolt email-lel lehet.
+- ✅ Jelszó-visszaállítás ("elfelejtett jelszó") — 1 órás, hash-elt token.
+- ✅ Visszaigazoló/visszaállító email újraküldése rate-limitelve (60 mp / felhasználó), user-enumeration ellen generikus válaszüzenetekkel.
+- ✅ Backend oldali, JWT-alapú felhasználói adatizoláció (EF Core globális query filter + automatikus tulajdonos-hozzárendelés mentéskor).
+- ✅ Képfeltöltés, átméretezés/tömörítés, felhasználónkénti tárolás.
+- ✅ Favicon és márkajelzés (`NewStile.jpg` alapján) a login/regisztráció felületen.
 
-- felvásárlások rögzítése;
-- saját termés rögzítése;
-- eladások rögzítése;
-- rekeszek mozgásának és tartozásának követése;
-- kocsi- és raktárkészlet kezelése;
-- eladók és vevők nyilvántartása;
-- egyenlegek és tartozások áttekintése;
-- forgalmi / könyvelési riportok;
-- zöldségekhez kapcsolódó képek kezelése.
+Folyamatban / még nincs kész:
 
-A rendszer nem általános vállalatirányítási szoftver. A fejlesztés elsődleges célja a tényleges piaci használat egyszerű, gyors és megbízható támogatása.
+- [ ] ÁSZF és adatkezelési tájékoztató végleges (jelenleg placeholder szövegek: `ASZF.md`, `ADATKEZELESI_TAJEKOZTATO.md`).
+- [ ] Frontend redesign (a jelenlegi "papír/krétazöld" stílusból az új `ZöldPiac` márka felé — lásd 9. szakasz).
+- [ ] `Vendeg` (korlátozott) szerepkör tényleges kidolgozása — az adatmodellben már létezik a `FelhasznaloSzerepkor` enum, de jelenleg minden regisztráló `Admin` szerepet kap, és a kód nem tesz különbséget. Ez tudatosan később eldöntendő kérdés.
+- [ ] Éles adatbázis-migráció ellenőrzése tényleges production környezeten.
 
 ---
 
 ## 2. Technológiai felépítés
 
 ### Backend
-
-- ASP.NET Core / .NET 8 Web API
-- Entity Framework Core
-- MySQL / MariaDB kompatibilis adatbázis
-- Pomelo Entity Framework Core MySQL provider
-- JWT alapú autentikáció
-- BCrypt jelszóhash-elés
-- REST API
+- ASP.NET Core / .NET 8 Web API, C#
+- Entity Framework Core + Pomelo MySQL provider
+- MySQL / MariaDB
+- JWT-alapú autentikáció, BCrypt jelszóhash-elés
 - ImageSharp képfeldolgozás
+- REST API, Swagger
 
 ### Frontend
-
-- Vue 3
-- Vite
-- Pinia
-- Vue Router
-- mobil / iPad / asztali használatra optimalizált felület
+- Vue 3 (Composition API), Vite, Pinia, Vue Router, Axios
+- Mobil-first, reszponzív felület (mobil / iPad / asztali)
 
 ### Üzemeltetés
+A `ZoldPiac` külön infrastruktúrán fut a korábbi (`Piac`) rendszerhez képest: külön frontend URL, backend URL, adatbázis, GitHub repository. A régi rendszer adatai nem részei ennek a repónak.
 
-A `ZoldPiac` külön infrastruktúrán fut a korábbi rendszerhez képest:
-
-- külön frontend URL;
-- külön backend URL;
-- külön adatbázis;
-- külön GitHub repository.
-
-A régi rendszer adatai és működése nem része ennek a repositorynak.
-
----
-
-# 3. Aktuális fejlesztési fázis – többfelhasználós tesztverzió
-
-A projekt jelenleg a **nyíltabb felhasználói tesztelés előtti / alatti fejlesztési szakaszban** van.
-
-A cél, hogy néhány korábbi érdeklődő mellett más érdeklődők is önállóan regisztrálhassanak, kipróbálhassák a rendszert, és továbbajánlhassák azt.
-
-A jelenlegi fejlesztési irány:
-
-1. `admin/admin` belépés megszüntetése.
-2. Email-címes regisztráció bevezetése.
-3. Emailes visszaigazolás bevezetése.
-4. Minden regisztrált ügyfél saját adatterületének kialakítása.
-5. A backendben kötelező felhasználói adatizoláció.
-6. Képek felhasználónként elkülönített tárolása.
-7. Képek automatikus átméretezése és tömörítése.
-8. ÁSZF és adatkezelési dokumentáció kialakítása.
-9. Lokális és éles tesztelés.
-
----
-
-# 4. Felhasználói és jogosultsági modell
-
-## 4.1. Nincs többé `admin/admin`
-
-A korábbi fejlesztési modellben az alkalmazás egy előre létrehozott `admin` felhasználóval indult.
-
-Ez a publikusabb tesztverzióban megszűnik.
-
-Nem lesz előre létrehozott közös `admin/admin` fiók.
-
-A felhasználók saját email-címmel regisztrálnak.
-
-## 4.2. Regisztráció
-
-A tervezett folyamat:
+Példa production topológia (a tényleges értékeket a szolgáltatói fiók adja):
 
 ```text
-email + jelszó
-      ↓
-regisztráció
-      ↓
-emailes visszaigazolás
-      ↓
-fiók aktiválása
-      ↓
-bejelentkezés
-      ↓
-alkalmazás használata
+Frontend:  https://<frontend-alias>.tryasp.net/
+Backend:   https://<backend-alias>.runasp.net/
+MySQL:     <db-név>.public.databaseasp.net:3306
 ```
-
-A regisztráció minden érdeklődő számára nyitott.
-
-## 4.3. Jogosultság
-
-A jelenlegi alkalmazási jogosultsági szint marad az alapértelmezett jogosultság minden regisztrált ügyfél számára.
-
-Nincs szükség külön, alkalmazáson belüli üzemeltetői adminisztrátori szerepre.
-
-A szolgáltatás üzemeltetője a rendszer működését közvetlenül a szerver / adatbázis oldaláról követi.
 
 ---
 
-# 5. Többfelhasználós adatmodell
+## 3. Felhasználói és jogosultsági modell
 
-A többfelhasználós működés alapelve:
-
-> **Minden üzleti adat egy konkrét felhasználóhoz tartozik.**
-
-A felhasználó saját adatai nem keveredhetnek más felhasználók adataival.
-
-Ennek megfelelően a fő üzleti entitásoknak felhasználói tulajdonosi kapcsolattal kell rendelkezniük, például:
+Nincs előre létrehozott közös `admin/admin` fiók. A felhasználók saját email-címmel regisztrálnak.
 
 ```text
-User
- └── UserId
-
-Partner
- └── UserId
-
-Vevo
- └── UserId
-
-Zoldseg
- └── UserId
-
-RekeszTipus
- └── UserId
-
-FelvasarlasTetel
- └── UserId
-
-EladasTetel
- └── UserId
+email + jelszó → regisztráció → emailes visszaigazolás → fiók aktiválása → bejelentkezés → alkalmazás használata
 ```
 
-A pontos migrációs megvalósítást az aktuális adatmodellhez kell igazítani.
+Elfelejtett jelszó esetén:
 
-## 5.1. Backend oldali adatizoláció
+```text
+email megadása → visszaállító email → új jelszó megadása a linken → bejelentkezés
+```
 
-A felhasználó azonosítása nem a frontend által beküldött `UserId`-ra épülhet.
+Jelenleg minden regisztrált felhasználó ugyanazt a teljes funkcionalitást kapja (nincs külön alkalmazáson belüli admin szerepkör — az üzemeltető a rendszer működését közvetlenül a szerver/adatbázis oldaláról követi). A `Role` mező (`Admin`/`Vendeg`) az adatmodellben megvan egy jövőbeli, korlátozottabb "vendég" szerepkör lehetőségének, de ma nincs mögötte logika.
 
-A backendnek a hitelesített felhasználóból kell meghatároznia az aktuális `UserId`-t, majd minden lekérdezésnél és módosításnál ezt azonosítóként használnia.
+---
 
-Például:
+## 4. Többfelhasználós adatmodell és adatizoláció
+
+Alapelv: **minden üzleti adat egy konkrét felhasználóhoz tartozik**, és egy felhasználó nem férhet hozzá más felhasználó adataihoz.
+
+```text
+User ── UserId
+Partner, Vevo, Zoldseg, RekeszTipus, FelvasarlasTetel, EladasTetel ── mind: UserId
+```
+
+Ez a gyakorlatban meg is van valósítva:
+
+- A backend a hitelesített felhasználóból (JWT `NameIdentifier` claim) határozza meg az aktuális `UserId`-t — a frontend által küldött `UserId` sosem megbízható jogosultsági információ.
+- `AppDbContext` globális **query filter**-t alkalmaz minden üzleti entitáson (`Partner`, `Vevo`, `Zoldseg`, `RekeszTipus`, `FelvasarlasTetel`, `EladasTetel`): lekérdezéskor automatikusan csak a bejelentkezett felhasználó rekordjai látszanak.
+- Mentéskor (`SaveChanges`) az új rekordok automatikusan megkapják a bejelentkezett felhasználó `UserId`-ját; módosítás/törlés esetén kivétel dobódik, ha a rekord nem az övé.
 
 ```text
 JWT UserId = 17
-
-rekord UserId = 17
-→ engedélyezett
-
-rekord UserId = 18
-→ nem hozzáférhető
+rekord UserId = 17  → engedélyezett
+rekord UserId = 18  → nem hozzáférhető
 ```
-
-Ez a rendszer egyik legfontosabb biztonsági követelménye.
 
 ---
 
-# 6. Adatbázis és migrationök
+## 5. Adatbázis és migrációk
 
-A repositoryban az Entity Framework Core migrationök verziózott adatbázis-változásokat tartalmaznak.
-
-A jelenlegi migration-sorozat:
+A migráció-lánc jelenlegi állapota:
 
 ```text
 20260824060000_InitialCreate
@@ -193,173 +110,58 @@ A jelenlegi migration-sorozat:
 20260831120000_EladasHianyFelvasarlasKiegeszites
         ↓
 20260902201337_RaktarHelyszin
+        ↓
+20260910233000_MultiUserAccounts       (admin/admin → email-alapú multi-user)
+        ↓
+20260912120000_PasswordReset           (jelszó-visszaállítás mezői)
 ```
 
-A `AppDbContextModelSnapshot.cs` a jelenlegi modell állapotát követi.
+A backend indításakor (`DbInitializer.InitializeAsync`) automatikusan lefutnak a függőben lévő migrációk (`Database.MigrateAsync()`).
 
-## Fontos szabály
+### Fontos szabályok
+- A már elkészített migrációkat nem írjuk vissza menőlegesen át — új adatmodellhez új migráció készül.
+- Minden migráció előtt meg kell vizsgálni: milyen táblát/oszlopot érint, van-e adatvesztési kockázat, nullable-e az új mező, mi történik a meglévő rekordokkal.
+- Migrációt lehetőleg üres és már feltöltött adatbázison is le kell tesztelni.
+- Production migráció előtt: teljes adatbázis-mentés, mentés ellenőrzése, csak utána migráció.
 
-A már elkészített migrationöket nem írjuk visszamenőlegesen át csak azért, mert a modell tovább fejlődik.
-
-Az új adatmodellhez új migration készül.
-
-Ez biztosítja, hogy az adatbázis fejlődése követhető maradjon.
-
-## Startup migration
-
-A backend indításakor a rendszer jelenleg automatikusan megpróbálja alkalmazni a függőben lévő migrationöket.
-
-A seedelés külön `DbInitializer` feladata.
-
-A publikus többfelhasználós verzióban az automatikus `admin/admin` seed megszűnik.
+> A `MultiUserAccounts` migráció korábbi verziója tartalmazott egy `DELETE FROM Users WHERE Felhasznalonev = 'admin'` sort a régi egyfelhasználós rendszer maradványaként. Ez el lett távolítva — friss adatbázison ártalmatlan volt, de felesleges és félrevezető.
 
 ---
 
-# 7. Felvásárlás és készletmodell
+## 6. Felvásárlás és készletmodell
 
-## 7.1. Felvásárlás
+### 6.1. Felvásárlás
+Egy felvásárlási tétel egy konkrét rögzített tranzakció. Fontos adatai: dátum, eladó/partner, zöldség, rekesztípus, mennyiség, egységár, fizetve állapot, adott üres rekesz, helyszín, saját termés jelölése, megjegyzés.
 
-Egy felvásárlási tétel egy konkrét rögzített tranzakció.
+- **Vásárolt áru:** az egységár kötelező.
+- **Saját termés:** nincs partner; az egységár opcionális (becsült önköltségként használható, ha szükséges).
+- **Adott üres rekesz:** száma nem lehet nagyobb a felvásárolt mennyiségnél, alapértéke 0; a mennyiség módosítása nem írja át automatikusan.
 
-Fontos adatai:
+### 6.2. Nincs FIFO
+A rendszer nem vezet automatikus FIFO készletkezelést, és nincs rejtett készletforrás-allokáció sem — az `EladasTetel` nem tartja nyilván, melyik `FelvasarlasTetel`-ből fogyott. Ez szándékos üzleti döntés.
 
-- dátum;
-- eladó / partner;
-- zöldség;
-- rekesztípus;
-- mennyiség;
-- egységár;
-- fizetve állapot;
-- adott üres rekesz;
-- helyszín;
-- saját termés jelölése;
-- megjegyzés.
+A készlet elsődleges csoportosítási kulcsa **zöldség + rekesztípus** (nem része: partner, dátum, felvásárlási ár). A csoportosított nézet nem önálló adatbázisrekord — backend művelethez mindig egy valódi `FelvasarlasTetel` ID kell.
 
-### Vásárolt áru
+Nincs becsült/súlyozott átlag vételár számítás a készletnézetben (forrásallokáció hiányában nem lenne egzakt).
 
-Vásárolt árunál az egységár kötelező.
-
-### Saját termés
-
-Saját termésnél nincs partner. Az egységár opcionális, korábbi döntés szerint becsült önköltségként használható ott, ahol erre szükség van.
-
-### Adott üres rekesz
-
-Az adott üres rekeszek száma nem lehet nagyobb a felvásárolt mennyiségnél.
-
-Alapértéke 0.
-
-A mennyiség megváltoztatása nem írhatja át automatikusan az adott rekeszek számát.
-
----
-
-# 8. Készletmodell – nincs FIFO
-
-A rendszerben nincs automatikus FIFO készletkezelés.
-
-Nem vezetünk be rejtett készletforrás-allokációt sem.
-
-Az `EladasTetel` nem tartja nyilván, hogy az adott eladás pontosan melyik `FelvasarlasTetel` rekordból fogyott.
-
-Ez szándékos üzleti döntés.
-
-## 8.1. Készletcsoportosítás
-
-A készlet elsődleges csoportosítási kulcsa:
-
-**zöldség + rekesztípus**
-
-Nem része a készletcsoportosításnak:
-
-- partner / eladó;
-- dátum;
-- felvásárlási ár.
-
-Példa:
-
-```text
-Alma M10 – 20 db
-Alma M10 – 15 db
-
-=> Alma M10 készlet: 35 db
-```
-
-Az adatbázisban az eredeti felvásárlási rekordok továbbra is különálló tételek maradnak.
-
-## 8.2. Átlagos vételár
-
-A készletnézetben nem számolunk becsült vagy súlyozott átlag vételárat.
-
-Ennek oka, hogy a forrásallokáció hiányában ez nem lenne egzakt.
-
-Ha a jövőben önköltség- vagy árrésszámításra szükség lesz, az külön fejlesztési és üzleti döntési feladat.
-
----
-
-# 9. Raktár és kocsi
-
-A rendszer két fő helyszínt kezel:
-
-- `Kocsi`
-- `Raktar`
-
-A felvásárlási tételhez tartozó `Helyszin` jelzi a fizikai helyet.
-
-Raktári tételnél az `AthelyezveDb` mutatja, hogy az adott eredeti sorból mennyi került át a kocsira.
+### 6.3. Raktár és kocsi
+Két fő helyszín: `Kocsi` és `Raktar`. A `Helyszin` mező jelzi a fizikai helyet; raktári tételnél az `AthelyezveDb` mutatja, mennyi került át a kocsira:
 
 ```text
 raktáron maradt mennyiség = Mennyiseg - AthelyezveDb
 ```
 
-## 9.1. Raktár → kocsi
+### 6.4. Egyenleg és rekesztartozás
 
-A csoportosított készletkártya nem önálló adatbázisrekord.
+**Mi tartozunk – eladóknak:** pénzbeli tartozás csak a nem fizetett felvásárlási tételekből; rekesztartozás a kapott/adott rekeszek különbsége.
 
-Backend művelethez mindig egy valódi felvásárlási tétel ID-ját kell használni.
-
-A csoportosítás kizárólag megjelenítési segítség; nem hozunk létre szintetikus csoport-ID-t.
+**Nekünk tartoznak – vevők:** pénztartozás = `mennyiség × egységár` a nem fizetett eladási tételeknél; rekesztartozás = `elvitt mennyiség − visszahozott rekesz − kifizetett hiány` (a hiány rendezése darabszám alapú).
 
 ---
 
-# 10. Egyenleg és rekesztartozás
+## 7. Képtárolás
 
-## 10.1. Mi tartozunk – eladóknak
-
-A felvásárlási tételek alapján számítható.
-
-Pénzbeli tartozás csak a nem fizetett tételekből számítódik.
-
-A rekesztartozásnál a felvásárláskor kapott és adott rekeszek különbsége számít.
-
-## 10.2. Nekünk tartoznak – vevők
-
-Az eladási tételekből számítódik.
-
-Pénztartozás:
-
-```text
-mennyiség × egységár
-```
-
-csak a nem fizetett tételeknél.
-
-Rekesztartozás:
-
-```text
-elvitt mennyiség
-- visszahozott rekesz
-- kifizetett hiány
-```
-
-A hiány rendezése darabszám alapú.
-
----
-
-# 11. Képtárolás
-
-A képek a többfelhasználós rendszerben nem kerülhetnek minden felhasználót közös könyvtárba.
-
-A tervezett könyvtárstruktúra:
+Minden felhasználó saját könyvtárat kap:
 
 ```text
 private/
@@ -367,178 +169,135 @@ private/
     └── users/
         ├── 1/
         ├── 2/
-        ├── 3/
         └── ...
 ```
 
-Minden felhasználó saját könyvtárat kap.
-
-## 11.1. Fájlnév
-
-Nem használjuk tartós fájlazonosítóként a feltöltött kép eredeti nevét.
-
-A szerver generáljon egyedi fájlnevet, például GUID-alapú azonosítót.
-
-Ez megakadályozza az olyan ütközéseket, mint:
-
-```text
-users/1/burgonya.jpg
-users/2/burgonya.jpg
-```
-
-és ugyanazon felhasználón belül sem fordulhat elő véletlen felülírás az eredeti fájlnév miatt.
-
-## 11.2. Képátméretezés és tömörítés
-
-A jelenlegi 5 MB-os feltöltési korlát csak a **bemeneti fájl maximális méretét** jelentse.
-
-A rendszer a feltöltött képet feldolgozza:
-
-```text
-mobiltelefon / eredeti fotó
-        ↓
-fájlméret-ellenőrzés
-        ↓
-kép dekódolása
-        ↓
-állandó maximális képméret
-        ↓
-JPEG / WebP tömörítés
-        ↓
-tárolás
-```
-
-A ténylegesen tárolt képnek jóval kisebbnek kell lennie az eredeti feltöltésnél.
-
-Mivel a képek az alkalmazásban kisméretű kártyaképként jelennek meg, nincs szükség több megabájtos, teljes felbontású eredetik tárolására.
-
-A cél a szemmel érzékelhető minőség megőrzése mellett a lehető legkisebb fájlméret.
-
-## 11.3. Képreferencia az adatbázisban
-
-A `Zoldseg.KepUrl` / képhivatkozás ne tartalmazzon környezethez kötött abszolút URL-t.
-
-Előnyben részesítendő egy relatív fájlreferencia, például:
-
-```text
-17/8c1f...webp
-```
-
-Így később a fájltárolás helye módosítható anélkül, hogy az adatbázisban minden rekordot át kellene írni.
+- A fájlnév szerver-generált, egyedi (nem az eredeti feltöltött név) — ütközések és felülírás elkerülésére.
+- Feltöltéskor 5 MB-os bemeneti korlát; a rendszer feldolgozza a képet (dekódolás → állandó max. méret → JPEG/WebP tömörítés → tárolás), mivel a képek kis kártyaképként jelennek meg.
+- A `Zoldseg.KepUrl` relatív fájlreferencia (pl. `17/8c1f...webp`), nem környezethez kötött abszolút URL — a tárolás helye így később módosítható.
+- Az uploads mappa a `wwwroot`-on kívül van (`Uploads:Path` appsettings kulcs, `UploadsPaths.Resolve()`), mert megosztott hosztingon a `wwwroot` redeploykor törlődhet.
 
 ---
 
-# 12. Biztonsági alapelvek
+## 8. Biztonsági alapelvek
 
-A publikus tesztverzióban különösen fontos:
+- Jelszavak soha nem kerülnek plaintext formában adatbázisba (BCrypt).
+- Email-visszaigazoló és jelszó-visszaállító tokenek SHA-256 hash-elve tárolódnak, lejárattal (24 óra, illetve 1 óra).
+- A visszaigazoló/visszaállító email újraküldése rate-limitelt (60 mp/felhasználó); a válaszüzenet generikus, hogy ne áruljon el, létezik-e a fiók az adott email-címmel.
+- A JWT signing key és a connection string nem kerül GitHubra — env variable-ból vagy lokális konfigurációból származik (`appsettings.example.json` csak placeholdereket tartalmaz).
+- Minden felhasználó csak a saját adatait éri el (ld. 4. szakasz); a frontend által küldött `UserId` sosem megbízható.
+- Feltöltött fájloknál fájltípus- és méretellenőrzés; a fájlneveket a szerver generálja.
+- Publikus repositoryba adatbázismentés, jelszó, token, kulcs nem kerülhet.
 
-- jelszavak soha nem kerülhetnek plaintext formában az adatbázisba;
-- a JWT signing key és a connection string nem kerülhet GitHubra;
-- a konfigurációs titkok environment variable-ból vagy lokális konfigurációból származzanak;
-- minden felhasználó csak a saját adatait érhesse el;
-- frontend által küldött UserId nem tekinthető megbízható jogosultsági információnak;
-- feltöltött fájloknál fájltípus- és méretellenőrzés szükséges;
-- a fájlneveket a szerver generálja;
-- publikus repositoryba adatbázismentés, jelszó, token, kulcs vagy egyéb titok nem kerülhet.
+### Konfiguráció és titkok — `appsettings.json` váz
 
----
-
-# 13. Jogi és szolgáltatási keretek
-
-A `ZoldPiac` jelenlegi célja egy ingyenesen kipróbálható szolgáltatás biztosítása.
-
-A regisztráció nyitott, a szolgáltatás kipróbálása minden érdeklődő számára lehetséges.
-
-A tervezett modell szerint a szolgáltatás a jelenlegi tesztidőszakban **előreláthatóan egy évig díjmentesen** vehető igénybe. Ezt követően a szolgáltatás fizetős formában folytatódhat.
-
-A későbbi fizetős működés nem tekintendő garantált jövőbeli feltételnek; annak szükségességéről és feltételeiről a tesztidőszak eredménye alapján születik döntés.
-
-A részletes jogi dokumentációban külön kell kezelni:
-
-- ÁSZF;
-- adatkezelési tájékoztató;
-- szolgáltatás rendelkezésre állása;
-- felhasználói felelősség;
-- feltöltött adatok kezelése;
-- adatmentés és adatvesztés kockázata;
-- a szolgáltatás megszüntetésének / szüneteltetésének lehetősége;
-- esetleges későbbi díjfizetés feltételei.
-
-> A jogi dokumentumok végleges szövegét a tényleges üzemeltetési és adatkezelési folyamatokkal összehangolva kell elkészíteni.
-
----
-
-# 14. Tesztidőszak célja
-
-A jelenlegi időszak nem csak technikai tesztelés, hanem **piaci validáció** is.
-
-A legfontosabb kérdés:
-
-> Van-e elegendő valódi érdeklődés és rendszeres használat ahhoz, hogy érdemes legyen a szolgáltatást később fizetős termékként továbbvinni?
-
-A kezdeti időszakban nem szükséges külön analitikai rendszer.
-
-Az üzemeltető számára alapvető információ lehet például:
-
-```text
-5 regisztrált felhasználó
-50 regisztrált felhasználó
-150 regisztrált felhasználó
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=...;Port=3306;Database=...;Uid=...;Pwd=CHANGE_ME;SslMode=Preferred;"
+  },
+  "Jwt": {
+    "Key": "CHANGE-THIS-TO-A-LONG-RANDOM-SECRET",
+    "Issuer": "ZoldPiac",
+    "Audience": "ZoldPiac",
+    "ExpiryHours": "12"
+  },
+  "Cors": { "Origins": ["https://<frontend-alias>.tryasp.net"] },
+  "Auth": { "FrontendUrl": "https://<frontend-alias>.tryasp.net" },
+  "Uploads": { "Path": "../private/images/users" },
+  "Smtp": {
+    "Host": "smtp.example.com", "Port": "587", "EnableSsl": "true",
+    "Username": "SMTP_USERNAME", "Password": "SMTP_PASSWORD",
+    "FromAddress": "noreply@example.com", "FromName": "ZoldPiac"
+  }
+}
 ```
 
-A felhasználói darabszám az adatbázis `User.Id` értékei és a tényleges rekordok alapján követhető.
+A tényleges titkokat és éles konfigurációt (`appsettings.Local.json`, `appsettings.Production.json`, `secrets*.json`, `.env*`) a `.gitignore` zárja ki a repóból; a repóban csak `appsettings.example.json` szerepel placeholderekkel.
 
-Az AUTO_INCREMENT érték önmagában nem feltétlenül egyenlő az aktuális rekordok számával, ha később felhasználói rekordok törlésére kerülne sor.
-
-Később készülhet külön üzemeltetői / elemző frontend, amely részletesebb használati adatokat vizsgál. Ez jelenleg nem része a projekt elsődleges céljának.
+> Ha valódi jelszó/secret korábban mégis GitHub repóba került, önmagában a törlése nem elég — a titkot le kell cserélni a szolgáltatónál, és csak placeholder maradhat a repóban.
 
 ---
 
-# 15. Fejlesztési alapelvek
+## 9. Márka és design irány
 
-A későbbi fejlesztéseknél ezeket az alapelveket meg kell őrizni:
+Az új márka: **ZöldPiac — Friss zöldségek, okosan. Online.**
+
+A repo gyökerében lévő `NewStile.jpg` az új vizuális stílust reprezentálja (élénk zöld/narancs, piaci-térkép "pin" ikon, zöldségekkel). Ebből készült:
+
+- `RekeszAppFrontend/public/favicon.ico`, `favicon-16/32/48/192/512.png`, `apple-touch-icon.png` — a böngésző/mobil favicon-készlet.
+- `RekeszAppFrontend/public/brand-zoldpiac.png` — ikon + felirat + szlogen lockup, jelenleg a Login / Regisztráció / Email-visszaigazolás felület fejlécében.
+
+Fontos: **a kép csak stílusirányzat**, nem szó szerint lemásolandó vizuális terv — a további redesign (színpaletta, tipográfia, elrendezés) ez alapján, de nem ebből kimásolva készül. A jelenlegi frontend stílusa és funkcionalitása nagyjából megfelelő, ehhez képest néhány pontosított módosítás várható a redesign körben.
+
+---
+
+## 10. Fejlesztési alapelvek
 
 1. A tényleges üzleti használat fontosabb az elméleti túltervezésnél.
 2. Nincs FIFO, hacsak arra külön üzleti döntés nem születik.
 3. Nincs rejtett készletforrás-allokáció.
 4. A csoportosított frontend-nézet nem jelent összevont adatbázisrekordot.
-5. A felhasználói adatizoláció backend oldali követelmény.
+5. A felhasználói adatizoláció backend oldali követelmény, nem bízható a frontendre.
 6. Egy felhasználó nem láthatja vagy módosíthatja más felhasználó üzleti adatait.
-7. A már alkalmazott migrationöket nem írjuk át visszamenőlegesen.
-8. Új adatbázisváltozás új migrationnel történik.
-9. A képek tárolása felhasználónként elkülönített.
-10. A képek méretét és minőségét a tényleges webes megjelenítéshez kell igazítani.
-11. Titkok és éles konfiguráció nem kerülhetnek a repositoryba.
-12. A lehető legegyszerűbb megoldást választjuk, amely üzletileg és technikailag korrekt.
+7. A már alkalmazott migrációkat nem írjuk át visszamenőlegesen; új adatbázisváltozás új migrációval történik.
+8. A képek tárolása felhasználónkénti; méretük/minőségük a tényleges webes megjelenítéshez igazított.
+9. Titkok és éles konfiguráció nem kerülhetnek a repositoryba.
+10. A lehető legegyszerűbb, üzletileg és technikailag korrekt megoldást választjuk.
 
 ---
 
-# 16. Következő fejlesztési sorrend
+## 11. Jogi és szolgáltatási keretek
 
-A jelenlegi szakaszban a javasolt végrehajtási sorrend:
+A `ZoldPiac` jelenlegi célja egy ingyenesen kipróbálható szolgáltatás biztosítása, nyitott regisztrációval. A tervek szerint a jelenlegi tesztidőszakban előreláthatóan egy évig díjmentesen vehető igénybe; a későbbi fizetős működés nem garantált, erről a tesztidőszak eredménye alapján születik döntés.
+
+A jogi dokumentáció vázlatai a repóban:
+- `ASZF.md`
+- `ADATKEZELESI_TAJEKOZTATO.md`
+
+Ezek **placeholder szövegek** — éles közzététel előtt a szolgáltatói adatokkal, tényleges adatfeldolgozókkal/tárhelyszolgáltatóval kell kiegészíteni, célszerűen szakemberrel átnézetve.
+
+---
+
+## 12. Tesztidőszak célja
+
+A jelenlegi időszak nem csak technikai tesztelés, hanem piaci validáció is: van-e elegendő valódi érdeklődés és rendszeres használat ahhoz, hogy érdemes legyen a szolgáltatást később fizetős termékként továbbvinni. Kezdetben nem szükséges külön analitikai rendszer — a felhasználószám a `User.Id` rekordok alapján követhető (az `AUTO_INCREMENT` érték önmagában nem feltétlenül egyezik a tényleges rekordszámmal, ha törlés is történik).
+
+---
+
+## 13. Fejlesztési folyamat
 
 ```text
-README frissítése
-       ↓
-User / regisztrációs modell
-       ↓
-emailes visszaigazolás
-       ↓
-admin/admin megszüntetése
-       ↓
-UserId alapú adatizoláció
-       ↓
-új EF migration
-       ↓
-képtárolás felhasználónként
-       ↓
-képátméretezés + tömörítés
-       ↓
-ÁSZF / adatkezelési dokumentáció
-       ↓
-lokális teljes teszt
-       ↓
-éles tesztverzió
+1. Repository ellenőrzése
+2. Jelenlegi működés megértése
+3. Probléma pontos meghatározása
+4. Módosítás
+5. Build
+6. Teszt
+7. Migráció esetén külön DB teszt (üres DB + meglévő adatokkal rendelkező DB)
+8. Git commit → Push
+9. Production ellenőrzés
 ```
 
-A következő fejlesztéseknek mindig a jelen dokumentumban rögzített multi-user működésből kell kiindulniuk.
+---
+
+## 14. Feladatlista
+
+### Multi-user működés
+- [x] regisztráció email-visszaigazolással
+- [x] login (csak visszaigazolt email-lel)
+- [x] jelszó-visszaállítás
+- [x] JWT
+- [x] UserId alapján szűrés (globális query filter + automatikus ownership)
+- [x] saját eladások / felvásárlások / partnerek / vevők / zöldségek / rekeszadatok
+- [x] másik user adatainak elrejtése
+
+### Frontend
+- [x] mobile-first reszponzivitás (alapok)
+- [x] favicon + márkajelzés a login/regisztráció felületen
+- [ ] teljes redesign az új `ZöldPiac` márka szerint
+- [ ] 1-2 még egyeztetendő funkcionális módosítás
+
+### Jogi / üzemeltetési
+- [ ] ÁSZF és adatkezelési tájékoztató véglegesítése
+- [ ] production migráció ellenőrzése tényleges környezeten, teljes DB-mentéssel

@@ -47,7 +47,8 @@ async function visszaigazoloUjrakuldes() {
 
 <template>
   <div class="card auth-card">
-    <h2>ZoldPiac — regisztráció</h2>
+    <img class="brand" src="/brand-zoldpiac.png" alt="ZöldPiac — friss zöldségek, okosan. Online." />
+    <h2>Regisztráció</h2>
     <p class="intro">A szolgáltatás jelenleg ingyenes tesztidőszakban használható.</p>
     <form @submit.prevent="regisztracio">
       <label>Email cím
@@ -78,8 +79,9 @@ async function visszaigazoloUjrakuldes() {
 
 <style scoped>
 .auth-card { max-width: 420px; margin: 0 auto; }
-h2 { margin-top: 0; font-size: 18px; color: var(--chalk-green); }
-.intro { font-size: 13px; line-height: 1.45; margin-top: -4px; }
+.brand { display: block; width: 100%; max-width: 220px; margin: 0 auto 14px; height: auto; }
+h2 { margin-top: 0; font-size: 18px; color: var(--chalk-green); text-align: center; }
+.intro { font-size: 13px; line-height: 1.45; margin-top: -4px; text-align: center; }
 form { display: flex; flex-direction: column; gap: 12px; }
 label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--olive); text-transform: uppercase; letter-spacing: 0.03em; }
 .check { flex-direction: row; align-items: flex-start; gap: 8px; text-transform: none; letter-spacing: 0; font-weight: 500; }

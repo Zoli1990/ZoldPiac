@@ -19,6 +19,10 @@ public class User
     public bool EmailVerified { get; set; }
     public string? VerificationTokenHash { get; set; }
     public DateTime? VerificationTokenExpiresAt { get; set; }
+    public DateTime? VerificationEmailSentAt { get; set; }
+    public string? ResetTokenHash { get; set; }
+    public DateTime? ResetTokenExpiresAt { get; set; }
+    public DateTime? ResetEmailSentAt { get; set; }
     public DateTime RegisteredAt { get; set; }
     public string AszfVerzio { get; set; } = "1.0";
     public DateTime AszfElfogadvaAt { get; set; }

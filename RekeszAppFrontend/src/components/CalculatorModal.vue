@@ -7,6 +7,7 @@ const previous = ref(null)
 const operator = ref(null)
 const waiting = ref(false)
 const expression = ref('')
+const afterEquals = ref(false)
 
 const buttons = [
   ['AC', 'clear'], ['+/-', 'sign'], ['%', 'percent'], ['÷', 'operator'],
@@ -18,18 +19,70 @@ const buttons = [
 
 const number = computed(() => Number(display.value.replace(',', '.')))
 
+function formazSzamot(value) {
+  return String(Number(value))
+}
+
 function inputDigit(d) {
-  if (waiting.value) { display.value = d; waiting.value = false; return }
+  if (afterEquals.value) {
+    display.value = d
+    previous.value = null
+    operator.value = null
+    expression.value = ''
+    waiting.value = false
+    afterEquals.value = false
+    return
+  }
+
+  if (waiting.value) {
+    display.value = d
+    waiting.value = false
+    return
+  }
+
   if (display.value === '0') display.value = d
   else if (display.value.length < 12) display.value += d
 }
+
 function inputDecimal() {
-  if (waiting.value) { display.value = '0.'; waiting.value = false; return }
+  if (afterEquals.value) {
+    display.value = '0.'
+    previous.value = null
+    operator.value = null
+    expression.value = ''
+    waiting.value = false
+    afterEquals.value = false
+    return
+  }
+
+  if (waiting.value) {
+    display.value = '0.'
+    waiting.value = false
+    return
+  }
+
   if (!display.value.includes('.')) display.value += '.'
 }
-function clear() { display.value = '0'; previous.value = null; operator.value = null; waiting.value = false; expression.value = '' }
-function sign() { if (display.value !== '0') display.value = display.value.startsWith('-') ? display.value.slice(1) : '-' + display.value }
-function percent() { display.value = String(number.value / 100) }
+
+function clear() {
+  display.value = '0'
+  previous.value = null
+  operator.value = null
+  waiting.value = false
+  expression.value = ''
+  afterEquals.value = false
+}
+
+function sign() {
+  if (display.value !== '0' && display.value !== 'Error') {
+    display.value = display.value.startsWith('-') ? display.value.slice(1) : '-' + display.value
+  }
+}
+
+function percent() {
+  display.value = String(number.value / 100)
+}
+
 function calculate(a, b, op) {
   if (op === '+') return a + b
   if (op === '−') return a - b
@@ -37,24 +90,67 @@ function calculate(a, b, op) {
   if (op === '÷') return b === 0 ? NaN : a / b
   return b
 }
+
 function chooseOperator(op) {
+  if (display.value === 'Error') {
+    clear()
+    return
+  }
+
   const current = number.value
-  if (operator.value && previous.value !== null && !waiting.value) {
+
+  if (afterEquals.value) {
+    expression.value = `${formazSzamot(current)}${op}`
+    previous.value = current
+    operator.value = op
+    waiting.value = true
+    afterEquals.value = false
+    return
+  }
+
+  if (operator.value && waiting.value) {
+    expression.value = expression.value.slice(0, -1) + op
+    operator.value = op
+    return
+  }
+
+  if (operator.value && previous.value !== null) {
     const result = calculate(previous.value, current, operator.value)
-    display.value = Number.isFinite(result) ? String(Number(result.toFixed(10))) : 'Error'
-    previous.value = Number(display.value)
-  } else previous.value = current
+    if (!Number.isFinite(result)) {
+      display.value = 'Error'
+      expression.value = `${expression.value}${formazSzamot(current)}=`
+      previous.value = null
+      operator.value = null
+      waiting.value = true
+      afterEquals.value = true
+      return
+    }
+    previous.value = result
+    display.value = formazSzamot(result)
+    expression.value = `${expression.value}${formazSzamot(current)}${op}`
+  } else {
+    previous.value = current
+    expression.value = `${formazSzamot(current)}${op}`
+  }
+
   operator.value = op
   waiting.value = true
-  expression.value = `${previous.value} ${op}`
 }
+
 function equals() {
-  if (!operator.value || previous.value === null) return
-  expression.value = `${previous.value} ${operator.value} ${number.value} =`
-  const result = calculate(previous.value, number.value, operator.value)
-  display.value = Number.isFinite(result) ? String(Number(result.toFixed(10))) : 'Error'
-  previous.value = null; operator.value = null; waiting.value = true
+  if (!operator.value || previous.value === null || display.value === 'Error') return
+
+  const current = number.value
+  expression.value = `${expression.value}${formazSzamot(current)}=`
+
+  const result = calculate(previous.value, current, operator.value)
+  display.value = Number.isFinite(result) ? formazSzamot(result) : 'Error'
+  previous.value = null
+  operator.value = null
+  waiting.value = true
+  afterEquals.value = true
 }
+
 function press(value, type) {
   if (display.value === 'Error' && type !== 'clear') clear()
   if (type === 'digit') value === '.' ? inputDecimal() : inputDigit(value)
@@ -70,8 +166,10 @@ function press(value, type) {
 <template>
   <div class="calc-overlay" @click.self="emit('close')">
     <div class="calculator" role="dialog" aria-label="Számológép">
-      <div class="calc-top"><button @click="emit('close')">Kész</button></div>
-      <div class="expression">{{ expression }}&nbsp;</div>
+      <div class="calc-top">
+        <button type="button" @click="emit('close')">Kész</button>
+      </div>
+      <div class="expression">{{ expression }}</div>
       <div class="display">{{ display }}</div>
       <div class="keys">
         <button v-for="([value, type], i) in buttons" :key="i" :class="[type]" @click="press(value, type)">{{ value }}</button>
@@ -81,16 +179,17 @@ function press(value, type) {
 </template>
 
 <style scoped>
-.calc-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:20px; }
-.calculator { width:min(330px,100%); background:#050505; border-radius:28px; padding:14px; box-shadow:0 18px 50px rgba(0,0,0,.4); }
-.calc-top { height:28px; display:flex; justify-content:flex-end; }
-.calc-top button { border:0; background:none; color:#ff9500; font-size:15px; cursor:pointer; }
-.expression { color:rgba(255,255,255,.45); min-height:22px; text-align:right; padding:0 10px; font-size:16px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
-.display { color:white; height:70px; display:flex; align-items:flex-end; justify-content:flex-end; padding:0 8px 10px; font-size:48px; font-weight:300; overflow:hidden; font-variant-numeric:tabular-nums; }
-.keys { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
-.keys button { height:62px; border:0; border-radius:50%; font-size:24px; cursor:pointer; background:#333; color:#fff; }
-.keys button:active { filter:brightness(1.35); }
-.keys .clear,.keys .sign,.keys .percent { background:#a5a5a5; color:#111; }
-.keys .operator,.keys .equals { background:#ff9500; color:#fff; }
-.keys .zero { grid-column:span 2; border-radius:31px; text-align:left; padding-left:24px; }
+.calc-overlay { position:fixed; inset:0; z-index:100; background:rgba(6,24,12,.56); display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(3px); }
+.calculator { width:min(360px,100%); background:var(--paper); color:var(--ink); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:var(--shadow); }
+.calc-top { min-height:28px; display:flex; justify-content:flex-end; align-items:center; }
+.calc-top button { border:0; background:transparent; color:var(--brand-green); font-size:14px; cursor:pointer; font-weight:700; padding:5px 7px; }
+.expression { min-height:28px; text-align:right; padding:4px 8px 0; font-size:18px; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.display { color:var(--ink); height:66px; display:flex; align-items:flex-end; justify-content:flex-end; padding:0 8px 8px; font-size:42px; font-weight:700; overflow:hidden; font-variant-numeric:tabular-nums; }
+.keys { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.keys button { height:58px; border:1px solid var(--line); border-radius:11px; font-size:21px; font-weight:700; cursor:pointer; background:var(--paper-warm); color:var(--ink); }
+.keys button:active { transform:translateY(1px); }
+.keys .clear,.keys .sign,.keys .percent { background:var(--paper-dim); color:var(--brand-deep); }
+.keys .operator { background:var(--brand-green); color:#fff; border-color:var(--brand-green); }
+.keys .equals { background:var(--brand-orange); color:#fff; border-color:var(--brand-orange); }
+.keys .zero { grid-column:span 2; text-align:left; padding-left:22px; }
 </style>
