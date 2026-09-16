@@ -69,10 +69,8 @@ header .user .btn-secondary { width: auto !important; padding-inline: 12px !impo
   height: auto !important;
   min-height: 0 !important;
 }
-.felv-tile-name { font-size: 12px !important; line-height: 1.2; }
-.felv-tile-info { font-size: 10px !important; line-height: 1.25; }
-.stock-tile-strip strong { font-size: 12px !important; }
-.stock-tile-strip span { font-size: 16px !important; }
+.felv-tile-name, .stock-tile-name { font-size: 15px !important; font-weight: 800; line-height: 1.2; }
+.felv-tile-info, .stock-tile-info { font-size: 12.5px !important; line-height: 1.3; }
 .raktar-tile-wrap, .stock-tile { min-width: 0; }
 .raktar-tile-wrap .athelyez-btn, .stock-tile-atvitel { width: 100%; }
 

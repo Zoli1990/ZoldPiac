@@ -21,6 +21,13 @@
   --kapia: var(--brand-orange);
   --kapia-dark: var(--brand-orange-dark);
   --olive: var(--muted);
+  /* Csempék fotó fölötti feliratsávja + halvány felületek. Témánként külön
+     értékek, mert a fix rgba(255,255,255,...) sötét módban olvashatatlan. */
+  --tile-overlay-bg: rgba(255, 255, 255, .93);
+  --tile-overlay-ink: var(--brand-deep);
+  --tile-overlay-muted: #41563f;
+  --surface-soft: rgba(6, 47, 20, .05);
+  --surface-soft-strong: rgba(6, 47, 20, .09);
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -46,6 +53,11 @@
   --kapia: var(--brand-orange);
   --kapia-dark: var(--brand-orange-dark);
   --olive: var(--muted);
+  --tile-overlay-bg: rgba(10, 18, 12, .82);
+  --tile-overlay-ink: #e6f6d8;
+  --tile-overlay-muted: #c4d6c6;
+  --surface-soft: rgba(255, 255, 255, .06);
+  --surface-soft-strong: rgba(255, 255, 255, .11);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { background: var(--paper-dim); }
@@ -78,7 +90,8 @@ a { color: var(--brand-green); }
 :root[data-theme="dark"] .section-head h1, :root[data-theme="dark"] .section-head h2, :root[data-theme="dark"] .section-head h3, :root[data-theme="dark"] .page-head h1, :root[data-theme="dark"] .page-head h2, :root[data-theme="dark"] .page-head h3, :root[data-theme="dark"] .card h1, :root[data-theme="dark"] .card h2, :root[data-theme="dark"] .card h3 { color: var(--brand-lime); }
 .felv-tile, .stock-tile { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--paper); box-shadow: var(--shadow-soft); }
 .felv-tile:hover, .stock-tile:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
-.felv-tile-info, .stock-tile-strip { background: var(--paper); }
+.felv-tile-overlay, .stock-tile-strip { background: var(--tile-overlay-bg); }
+.felv-tile-info, .stock-tile-info { background: transparent; }
 .overlay, .calc-overlay { backdrop-filter: blur(3px); }
 .overlay > .card, .overlay > .modal, .athelyez-modal, .felv-detail-modal, .sale-modal { box-shadow: var(--shadow); border: 1px solid var(--line); }
 :root[data-theme="dark"] .modal, :root[data-theme="dark"] .card, :root[data-theme="dark"] .calculator, :root[data-theme="dark"] .auth-card, :root[data-theme="dark"] .sale-modal, :root[data-theme="dark"] .felv-detail-modal, :root[data-theme="dark"] .athelyez-modal { background: var(--paper) !important; color: var(--ink) !important; }
@@ -87,7 +100,6 @@ a { color: var(--brand-green); }
 :root[data-theme="dark"] .action-btn, :root[data-theme="dark"] .close { background: var(--paper-warm) !important; color: var(--ink) !important; }
 :root[data-theme="dark"] .action-btn.save { background: #2f8748 !important; color: #fff !important; }
 :root[data-theme="dark"] .manage-buyers, :root[data-theme="dark"] .stock-tile-atvitel, :root[data-theme="dark"] .link-btn, :root[data-theme="dark"] .quick-btn, :root[data-theme="dark"] .quick-input, :root[data-theme="dark"] .pencil { background: var(--paper-warm) !important; color: var(--ink) !important; border-color: var(--line-strong) !important; }
-:root[data-theme="dark"] .stock-tile-strip, :root[data-theme="dark"] .felv-tile-info { background: var(--paper-warm) !important; color: var(--ink) !important; }
 :root[data-theme="dark"] .toggle-pill { background: var(--paper-warm) !important; color: var(--ink) !important; border-color: var(--line-strong) !important; }
 :root[data-theme="dark"] .toggle-pill.active { background: #2f8748 !important; color: #fff !important; border-color: #2f8748 !important; }
 :root[data-theme="dark"] .btn-secondary.danger-btn, :root[data-theme="dark"] .danger-btn { background: #2a1914 !important; color: var(--owe) !important; border-color: #6a4032 !important; }
