@@ -217,6 +217,72 @@ nav a.active { background:var(--brand-lime); color:var(--brand-deep); box-shadow
 main { max-width:1160px; margin:0 auto; padding:22px; }
 main.no-header { max-width:440px; padding-top:80px; }
 
+/* Mobil-first csempék: sötét módban is világos, fehér felület + jól olvasható zöld szöveg. */
+:deep(.felv-tile-overlay) { background:#fff !important; }
+:deep(.felv-tile-name) {
+  padding:8px 10px 2px;
+  font-size:16px !important;
+  line-height:1.2;
+  font-weight:800 !important;
+  color:#064c21 !important;
+}
+:deep(.felv-tile-info) {
+  padding:0 10px 8px;
+  font-size:14px !important;
+  line-height:1.3;
+  font-weight:650 !important;
+  color:#2f6f48 !important;
+}
+:deep(.mobile-tile) {
+  background:#fff !important;
+  color:#245d36 !important;
+}
+:deep(.mobile-tile-row) {
+  font-size:14px !important;
+  color:#245d36 !important;
+}
+:deep(.mobile-tile-row strong) {
+  font-size:16px !important;
+  font-weight:800 !important;
+  color:#064c21 !important;
+}
+:deep(.mobile-tile .zoldseg-nev) {
+  color:#064c21 !important;
+  font-weight:700;
+}
+:deep(.mini-thumb) {
+  width:80px !important;
+  height:80px !important;
+  border-radius:10px !important;
+}
+/* A mobil csempe már kattintással megnyitja a CRUD modalt, ezért a táblázatos ceruza felesleges. */
+:deep(.desktop-only table td:last-child > .icon:first-child) { display:none !important; }
+
+/* Egyenleg: világos, kontrasztos partner-csempék sötét módban is. */
+:deep(.partner-block) {
+  background:#fff !important;
+  border-color:#d6e4d7 !important;
+  color:#245d36 !important;
+  padding:12px 14px !important;
+}
+:deep(.partner-block .partner-name) {
+  color:#064c21 !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+}
+:deep(.partner-block .balance-row) {
+  color:#245d36 !important;
+  font-size:13px !important;
+}
+:deep(.partner-block .money) { color:#b3441e !important; }
+:deep(.partner-block .partner-total) { color:#2f6f48 !important; }
+:deep(.egyenleg-card h2),
+:deep(.history-card h2),
+:deep(.stock-card h2) {
+  font-size:17px !important;
+  font-weight:800 !important;
+}
+
 .pwa-install-card {
   position:fixed;
   right:18px;
