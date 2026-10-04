@@ -175,11 +175,11 @@ public class RiportokController(AppDbContext db) : ControllerBase
         var vegTol = tol ?? vegIg;
 
         var felvasarlasok = await db.FelvasarlasTetelek
-            .Where(x => x.Datum >= vegTol && x.Datum <= vegIg && !x.Athozott)
+            .Where(x => x.Datum >= vegTol && x.Datum <= vegIg && !x.Athozott && x.Fizetve)
             .Include(x => x.Zoldseg)
             .ToListAsync();
         var eladasok = await db.EladasTetelek
-            .Where(x => x.Datum >= vegTol && x.Datum <= vegIg)
+            .Where(x => x.Datum >= vegTol && x.Datum <= vegIg && x.Fizetve)
             .Include(x => x.Zoldseg)
             .ToListAsync();
 
