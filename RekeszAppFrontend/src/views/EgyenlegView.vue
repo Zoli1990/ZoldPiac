@@ -19,9 +19,16 @@ const modalIrany = ref('elado')
 const modalPartner = ref(null)
 const mentesFolyamatban = ref(false)
 
-const ma = new Date().toISOString().slice(0, 10)
-const honapEleje = ma.slice(0, 8) + '01'
-const tol = ref(honapEleje)
+function helyiDatum() {
+  const d = new Date()
+  const ev = d.getFullYear()
+  const ho = String(d.getMonth() + 1).padStart(2, '0')
+  const nap = String(d.getDate()).padStart(2, '0')
+  return `${ev}-${ho}-${nap}`
+}
+
+const ma = helyiDatum()
+const tol = ref(ma)
 const ig = ref(ma)
 const rrDatum = ref(ma)
 
